@@ -41,7 +41,7 @@ describe( "device class unit tests", function() {
     beforeEach( function () {
 
         // Mock the connect API for mqtt.js
-        fakeConnect = function(wrapper,options) {
+        fakeConnect = function(wrapper, options) {
             mockMQTTClientObject = new mockMQTTClient(); // return the mocking object
             mockMQTTClientObject.reInitCommandCalled();
             mockMQTTClientObject.resetPublishedMessage();
@@ -1900,7 +1900,24 @@ describe( "device class unit tests", function() {
             customAuthHeaders: headers
          });
          assert.equal( headers, device.getWebsocketHeaders() );
+         assert.equal( device.getWebsocketCustomAuthUrl(), 'wss://XXXX.iot.us-east-1.amazonaws.com/mqtt');
       });
-      
+   });
+   describe("websocket headers are correctly deferred to query params when isBrowser set to true", function() {
+      it("sets the websocket query params correctly", function() {
+         var headers = {
+            'X-Amz-CustomAuthorizer-Name': 'AuthorizerFunctionName',
+            'X-Amz-CustomAuthorizer-Signature': 'Signature',
+            'NPAuthorizerToken': 'Token'
+         };
+         var device = new deviceModule({
+            isBrowser: true,
+            host: 'XXXX.iot.us-east-1.amazonaws.com',
+            protocol: 'wss-custom-auth',
+            customAuthHeaders: headers
+         });
+
+         assert.equal( device.getWebsocketCustomAuthUrl(), 'wss://XXXX.iot.us-east-1.amazonaws.com/mqtt?x-amz-customauthorizer-name=AuthorizerFunctionName&x-amz-customauthorizer-signature=Signature&npauthorizertoken=Token');
+      });
    });
 });

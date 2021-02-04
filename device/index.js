@@ -164,6 +164,7 @@ function prepareWebSocketUrl(options, awsAccessId, awsSecretKey, awsSTSToken) {
 function prepareWebSocketCustomAuthUrl(options) {
    var path = '/mqtt';
    var hostName = options.host;
+   var queryParams = '';
 
    // Include the port number in the hostname if it's not 
    // the standard wss port (443).
@@ -172,7 +173,17 @@ function prepareWebSocketCustomAuthUrl(options) {
       hostName = options.host + ':' + options.port;
    }
 
-   return 'wss://' + hostName + path;
+   if (options.isBrowser && !isUndefined(options.customAuthHeaders) && options.customAuthHeaders['X-Amz-CustomAuthorizer-Name']) {
+      queryParams = '?x-amz-customauthorizer-name=' + options.customAuthHeaders['X-Amz-CustomAuthorizer-Name'];
+
+      Object.keys(options.customAuthHeaders).forEach(function (k) {
+         if (k !== 'X-Amz-CustomAuthorizer-Name') {
+            queryParams += '&' + k.toLowerCase() + '=' + options.customAuthHeaders[k];
+         }
+      });
+   }
+
+   return 'wss://' + hostName + path + queryParams;
 }
 
 function arrayEach(array, iterFunction) {
@@ -907,6 +918,9 @@ function DeviceClient(options) {
    };
    this.getWebsocketHeaders = function() {
       return options.websocketOptions.headers;
+   };
+   this.getWebsocketCustomAuthUrl = function() {
+      return prepareWebSocketCustomAuthUrl(options);
    };
    //
    // Call this function to update the custom auth headers
